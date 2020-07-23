@@ -1,4 +1,4 @@
-FROM ashish1981/x86-rbase-shiny-plumber
+FROM ashish1981/s390x-rbase-rjava-rplumber
 #
 #copy application
 COPY /app /srv/shiny-server/
