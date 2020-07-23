@@ -8,6 +8,7 @@ COPY shiny-server.conf  /etc/shiny-server/shiny-server.conf
 COPY shiny-server.sh /usr/bin/shiny-server.sh
 RUN chmod +x /usr/bin/shiny-server.sh
 COPY run-myfile.R /srv/shiny-server/
+RUN rm -rf /tmp/*
 #
 # Make the ShinyApp available at port 1240
 EXPOSE 9443 8000
