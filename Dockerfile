@@ -1,4 +1,4 @@
-FROM ashish1981/s390x-rbase-rjava-rplumber
+FROM ashish1981/s390x-shiny-server
 #
 #copy application
 COPY /app /srv/shiny-server/
