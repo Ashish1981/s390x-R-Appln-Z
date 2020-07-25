@@ -12,4 +12,4 @@ then
 fi
 
 # start shiny server
-exec shiny-server 2>&1
+exec /usr/bin/shiny-server 2>&1
