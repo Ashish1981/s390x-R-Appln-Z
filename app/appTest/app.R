@@ -119,7 +119,7 @@ ui <- dashboardPage(
 
 options(shiny.maxRequestSize = 9*1024^2)
 
-server <- shinyServer(function(input, output, session) {
+server <- shinyServer(function(input, output) {
 
   output$myTestButton_message <- renderText({
     return(paste("Button clicked ",input$myTestButton," times",sep=""))
