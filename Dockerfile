@@ -1,4 +1,5 @@
-FROM ashish1981/s390x-shiny-server:new
+#FROM ashish1981/s390x-shiny-server:new
+FROM ashish1981/s390x-shiny-server
 #
 
 #copy application
@@ -39,5 +40,6 @@ RUN chmod -R 775 /etc/shiny-server
 WORKDIR /var/log/supervisord
 #
     
-USER shiny
+
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
+USER shiny
