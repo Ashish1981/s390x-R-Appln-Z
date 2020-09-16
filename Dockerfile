@@ -6,6 +6,7 @@ ARG uid=1000
 ARG gid=1000
 ARG SHINY_HOME=/srv/shiny-server
 
+RUN userdel ${user} && groupdel ${group}
 RUN chown ${uid}:${gid} $SHINY_HOME \
     && groupadd -g ${gid} ${group} \
     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
