@@ -31,7 +31,7 @@ EXPOSE 9443 8000
 COPY /supervisord.conf /etc/
 RUN mkdir -p /var/log/supervisord
 RUN chmod -R 777 /var/log/supervisord
-RUN chmod -R 777 /var/log/shiny-server  
+RUN chmod -R 777 /var/log/shiny-server 
 RUN chmod -R 775 /srv/shiny-server
 RUN chmod -R 775 /var/lib/shiny-server
 RUN chmod -R 775 /etc/shiny-server
