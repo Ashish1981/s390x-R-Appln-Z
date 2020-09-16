@@ -1,5 +1,15 @@
 FROM ashish1981/s390x-shiny-server:new
 #
+ARG user=shiny
+ARG group=shiny
+ARG uid=1000
+ARG gid=1000
+ARG SHINY_HOME=/srv/shiny-server
+
+RUN chown ${uid}:${gid} $SHINY_HOME \
+    && groupadd -g ${gid} ${group} \
+    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
+
 #copy application
 COPY /app /srv/shiny-server/
 #
@@ -30,7 +40,10 @@ EXPOSE 9443 8000
 COPY /supervisord.conf /etc/
 RUN mkdir -p /var/log/supervisord
 RUN chmod -R 777 /var/log/supervisord  
+RUN chmod -R 775 /srv/shiny-server/  
 #VOLUME [ "/tmp/log/supervisord" ]
-#WORKDIR /srv/shiny-server/
+WORKDIR /var/log/supervisord
 #
+    
+USER shiny
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
