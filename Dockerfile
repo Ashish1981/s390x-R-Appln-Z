@@ -1,15 +1,15 @@
 FROM ashish1981/s390x-shiny-server:new
 #
-ARG user=shiny
-ARG group=shiny
-ARG uid=1000
-ARG gid=1000
-ARG SHINY_HOME=/srv/shiny-server
+# ARG user=shiny
+# ARG group=shiny
+# ARG uid=1000
+# ARG gid=1000
+# ARG SHINY_HOME=/srv/shiny-server
 
-RUN userdel ${user} && groupdel ${group}
-RUN chown ${uid}:${gid} $SHINY_HOME \
-    && groupadd -g ${gid} ${group} \
-    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
+# RUN userdel ${user} && groupdel ${group}
+# RUN chown ${uid}:${gid} $SHINY_HOME \
+#     && groupadd -g ${gid} ${group} \
+#     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 
 #copy application
 COPY /app /srv/shiny-server/
