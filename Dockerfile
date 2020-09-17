@@ -1,5 +1,5 @@
 #FROM ashish1981/s390x-shiny-server:new
-FROM ashish1981/s390x-shiny-server
+FROM ashish1981/s390x-shiny-server:new
 #
 
 #copy application
