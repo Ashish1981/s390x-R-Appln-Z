@@ -39,4 +39,5 @@ RUN chmod -R 777 /etc/shiny-server
 #VOLUME [ "/tmp/log/supervisord" ]
 WORKDIR /var/log/supervisord
 #
+
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
