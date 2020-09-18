@@ -10,7 +10,7 @@ ARG SHINY_HOME=/var/log/supervisord
 ENV SHINY_HOME $SHINY_HOME
 
 #
-RUN mkdir -p /var/log/supervisord
+#RUN mkdir -p /var/log/supervisord
 RUN chown ${uid}:${gid} $SHINY_HOME \
     && groupadd -g ${gid} ${group} \
     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
