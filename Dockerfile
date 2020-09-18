@@ -1,10 +1,10 @@
 FROM ashish1981/s390x-shiny-server:new2
 #FROM ashish1981/s390x-shiny-server
 #
-ARG user=shiny
-ARG group=shiny
-ARG uid=1001
-ARG gid=1001
+ARG user=1000630000
+ARG group=1000630000
+ARG uid=1000630000
+ARG gid=1000630000
 ARG SHINY_HOME=/srv/shiny-server
 
 ENV SHINY_HOME $SHINY_HOME
