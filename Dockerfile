@@ -3,15 +3,19 @@ FROM ashish1981/s390x-shiny-server:new2
 #
 ARG user=shiny
 ARG group=shiny
-ARG uid=1000630001
-ARG gid=1000630001
-ARG SHINY_HOME=/var/log/supervisord
+ARG uid=1001
+ARG gid=1001
+ARG SHINY_HOME=/srv/shiny-server
 
 ENV SHINY_HOME $SHINY_HOME
 
 #
 RUN mkdir -p /var/log/supervisord
 RUN chown ${uid}:${gid} $SHINY_HOME \
+    && chown ${uid}:${gid} /srv/shiny-server \
+    && chown ${uid}:${gid} /var/lib/shiny-server \
+    && chown ${uid}:${gid} /etc/shiny-server \
+    && chown ${uid}:${gid} /var/log/supervisord \
     && groupadd -g ${gid} ${group} \
     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 #copy application
