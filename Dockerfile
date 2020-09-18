@@ -1,5 +1,5 @@
-#FROM ashish1981/s390x-shiny-server:new
-FROM ashish1981/s390x-shiny-server
+FROM ashish1981/s390x-shiny-server:new2
+#FROM ashish1981/s390x-shiny-server
 #
 ARG user=shiny
 ARG group=shiny
@@ -10,7 +10,7 @@ ARG SHINY_HOME=/var/log/supervisord
 ENV SHINY_HOME $SHINY_HOME
 
 #
-#RUN mkdir -p /var/log/supervisord
+RUN mkdir -p /var/log/supervisord
 RUN chown ${uid}:${gid} $SHINY_HOME \
     && groupadd -g ${gid} ${group} \
     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
