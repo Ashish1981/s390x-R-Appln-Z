@@ -66,6 +66,6 @@ WORKDIR /var/log/supervisord
 # USER 1000
 # Adjust permissions on /etc/passwd so writable by group root.
 
-RUN chmod g+w /etc/passwd
-RUN ./scripts/uid-set.sh
+# RUN chmod g+w /etc/passwd
+# RUN ./scripts/uid-set.sh
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
