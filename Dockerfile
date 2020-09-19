@@ -17,7 +17,8 @@ RUN chown ${uid}:${gid} $SHINY_HOME \
     && chown ${uid}:${gid} /etc/shiny-server \
     && chown ${uid}:${gid} /var/log/supervisord \
     # && groupadd -g ${gid} ${group} \
-    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
+    # && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
+    && useradd -d "$SHINY_HOME" -g ${gid} -m -s /bin/bash ${user}
 #copy application
 COPY /app /srv/shiny-server/
 #
