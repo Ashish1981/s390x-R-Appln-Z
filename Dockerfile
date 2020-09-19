@@ -3,8 +3,8 @@ FROM ashish1981/s390x-shiny-server:working
 #
 ARG user=shiny
 ARG group=shiny
-ARG uid=1001
-ARG gid=1001
+ARG uid=1000
+ARG gid=1000
 ARG SHINY_HOME=/srv/shiny-server
 
 ENV SHINY_HOME $SHINY_HOME
@@ -16,7 +16,7 @@ RUN chown ${uid}:${gid} $SHINY_HOME \
     && chown ${uid}:${gid} /var/lib/shiny-server \
     && chown ${uid}:${gid} /etc/shiny-server \
     && chown ${uid}:${gid} /var/log/supervisord \
-    && groupadd -g ${gid} ${group} \
+    # && groupadd -g ${gid} ${group} \
     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 #copy application
 COPY /app /srv/shiny-server/
@@ -46,13 +46,14 @@ EXPOSE 9443 8000
 # COPY /ssl.conf /etc/nginx/conf.d/
 # Copy further configuration files into the Docker image
 COPY /supervisord.conf /etc/
-RUN chmod -R 777 /var/log/supervisord
-RUN chmod -R 777 /var/log/shiny-server 
-RUN chmod -R 777 /srv/shiny-server
-RUN chmod -R 777 /var/lib/shiny-server
-RUN chmod -R 777 /etc/shiny-server
+RUN chmod -Rf g+wx /var/log/supervisord
+RUN chmod -Rf g+wx /var/log/shiny-server 
+RUN chmod -Rf g+wx /srv/shiny-server
+RUN chmod -Rf g+wx /var/lib/shiny-server
+RUN chmod -Rf g+wx /etc/shiny-server
 #VOLUME [ "/tmp/log/supervisord" ]
 WORKDIR /var/log/supervisord
 #
-USER 1000
+# USER 1000
+
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
