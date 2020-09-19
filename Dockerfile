@@ -9,7 +9,7 @@ ARG SHINY_HOME=/srv/shiny-server
 
 # USER root
 # ENV SHINY_HOME $SHINY_HOME
-RUN userdel -r docker && groupdel docker
+RUN userdel -r docker 
 
 # #
 RUN mkdir -p /var/log/supervisord
