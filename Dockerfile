@@ -7,18 +7,20 @@ ARG uid=1000
 ARG gid=1000
 ARG SHINY_HOME=/srv/shiny-server
 
-ENV SHINY_HOME $SHINY_HOME
+# USER root
+# ENV SHINY_HOME $SHINY_HOME
+RUN userdel -r docker && groupdel docker
 
-#
+# #
 RUN mkdir -p /var/log/supervisord
 RUN chown ${uid}:${gid} $SHINY_HOME \
     && chown ${uid}:${gid} /srv/shiny-server \
     && chown ${uid}:${gid} /var/lib/shiny-server \
     && chown ${uid}:${gid} /etc/shiny-server \
     && chown ${uid}:${gid} /var/log/supervisord \
-    # && groupadd -g ${gid} ${group} \
-    # && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
-    && useradd -d "$SHINY_HOME" -g ${gid} -m -s /bin/bash ${user}
+    && groupadd -g ${gid} ${group} \
+    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
+    # && useradd -d "$SHINY_HOME" -g ${gid} -m -s /bin/bash ${user}
 #copy application
 COPY /app /srv/shiny-server/
 #
@@ -62,5 +64,8 @@ RUN chgrp -Rf root /etc/shiny-server && chmod -Rf g+rwx /etc/shiny-server
 WORKDIR /var/log/supervisord
 #
 # USER 1000
+# Adjust permissions on /etc/passwd so writable by group root.
 
+RUN chmod g+w /etc/passwd
+RUN ./scripts/uid-set.sh
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
