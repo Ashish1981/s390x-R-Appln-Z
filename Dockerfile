@@ -3,8 +3,8 @@ FROM ashish1981/s390x-shiny-server:working
 #
 ARG user=shiny
 ARG group=shiny
-ARG uid=1000
-ARG gid=1000
+ARG uid=1001
+ARG gid=1001
 ARG SHINY_HOME=/srv/shiny-server
 
 ENV SHINY_HOME $SHINY_HOME
