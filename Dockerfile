@@ -1,4 +1,5 @@
 FROM ashish1981/s390x-shiny-server
+ENV SHINY_LOG_LEVEL=TRACE
 #FROM ashish1981/s390x-shiny-server
 #
 # ARG user=shiny
