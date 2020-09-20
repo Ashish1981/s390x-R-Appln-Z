@@ -30,7 +30,11 @@ COPY shiny-server.sh /usr/bin/shiny-server.sh
 RUN chmod +x /usr/bin/shiny-server.sh
 COPY run-myfile.R /srv/shiny-server/
 RUN rm -rf /tmp/*
-#
+### Access Fix 24
+RUN username=`id -u`
+COPY /scripts/uid-set.sh /usr/bin/
+RUN chmod +x /usr/bin/uid-set.sh
+RUN ./usr/bin/uid-set.sh
 # Make the ShinyApp available at port 1240
 EXPOSE 9443 8000
 #
