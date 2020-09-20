@@ -62,14 +62,14 @@ RUN chgrp -Rf root /etc/shiny-server && chmod -Rf g+rwx /etc/shiny-server
 #VOLUME [ "/tmp/log/supervisord" ]
 WORKDIR /var/log/supervisord
 #
-# USER 1000
-# Adjust permissions on /etc/passwd so writable by group root.
-# RUN chmod g+w /etc/passwd
-# ### Access Fix 24
-# RUN username=`id -u` 
-# COPY /scripts/uid-set.sh /usr/bin/
-# RUN chmod +x /usr/bin/uid-set.sh
-# RUN /usr/bin/uid-set.sh
 
+# ###Adjust permissions on /etc/passwd so writable by group root.
+RUN chmod g+w /etc/passwd
+### Access Fix 24
+COPY /scripts/uid-set.sh /usr/bin/
+RUN chmod +x /usr/bin/uid-set.sh
+RUN /usr/bin/uid-set.sh
+####################
+USER 1000
 
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
