@@ -1,25 +1,25 @@
-FROM ashish1981/s390x-shiny-server:working
+FROM ashish1981/s390x-shiny-server:w2
 #FROM ashish1981/s390x-shiny-server
 #
-ARG user=shiny
-ARG group=shiny
-ARG uid=1000
-ARG gid=1000
-ARG SHINY_HOME=/srv/shiny-server
+# ARG user=shiny
+# ARG group=shiny
+# ARG uid=1000
+# ARG gid=1000
+# ARG SHINY_HOME=/srv/shiny-server
 
-USER root
-# ENV SHINY_HOME $SHINY_HOME
-RUN userdel -r docker 
+# USER root
+# # ENV SHINY_HOME $SHINY_HOME
+# RUN userdel -r docker 
 
-# #
+# # #
 RUN mkdir -p /var/log/supervisord
-RUN chown ${uid}:${gid} $SHINY_HOME \
-    && chown ${uid}:${gid} /srv/shiny-server \
-    && chown ${uid}:${gid} /var/lib/shiny-server \
-    && chown ${uid}:${gid} /etc/shiny-server \
-    && chown ${uid}:${gid} /var/log/supervisord \
-    && groupadd -g ${gid} ${group} \
-    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
+# RUN chown ${uid}:${gid} $SHINY_HOME \
+#     && chown ${uid}:${gid} /srv/shiny-server \
+#     && chown ${uid}:${gid} /var/lib/shiny-server \
+#     && chown ${uid}:${gid} /etc/shiny-server \
+#     && chown ${uid}:${gid} /var/log/supervisord \
+#     && groupadd -g ${gid} ${group} \
+#     && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
     # && useradd -d "$SHINY_HOME" -g ${gid} -m -s /bin/bash ${user}
 #copy application
 COPY /app /srv/shiny-server/
@@ -68,8 +68,8 @@ RUN chmod g+w /etc/passwd
 ### Access Fix 24
 COPY /scripts/uid-set.sh /usr/bin/
 RUN chmod +x /usr/bin/uid-set.sh
-RUN /usr/bin/uid-set.sh
+# RUN /usr/bin/uid-set.sh
 ####################
-USER 1000
-
+# USER 1000
+USER shiny
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
