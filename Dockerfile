@@ -1,8 +1,8 @@
 FROM ashish1981/s390x-shiny-server:working
 #FROM ashish1981/s390x-shiny-server
 #
-ARG user=1000630000
-ARG group=1000630000
+ARG user=shiny
+ARG group=shiny
 ARG uid=1000
 ARG gid=1000
 ARG SHINY_HOME=/srv/shiny-server
@@ -66,7 +66,7 @@ WORKDIR /var/log/supervisord
 # Adjust permissions on /etc/passwd so writable by group root.
 RUN chmod g+w /etc/passwd
 ### Access Fix 24
-RUN username=`id -u`
+RUN username=`id -u` 
 COPY /scripts/uid-set.sh /usr/bin/
 RUN chmod +x /usr/bin/uid-set.sh
 RUN /usr/bin/uid-set.sh
