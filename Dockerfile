@@ -1,4 +1,4 @@
-FROM ashish1981/s390x-shiny-server:w2
+FROM ashish1981/s390x-shiny-server
 #FROM ashish1981/s390x-shiny-server
 #
 # ARG user=shiny
