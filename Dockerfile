@@ -69,8 +69,7 @@ RUN chmod g+w /etc/passwd
 RUN username=`id -u`
 COPY /scripts/uid-set.sh /usr/bin/
 RUN chmod +x /usr/bin/uid-set.sh
-RUN ./usr/bin/uid-set.sh
+RUN /usr/bin/uid-set.sh
 
-# RUN chmod g+w /etc/passwd
-# RUN ./scripts/uid-set.sh
+
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
