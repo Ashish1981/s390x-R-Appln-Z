@@ -71,5 +71,5 @@ RUN chmod +x /usr/bin/uid-set.sh
 # RUN /usr/bin/uid-set.sh
 ####################
 # USER 1000
-USER shiny
+# USER shiny
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
