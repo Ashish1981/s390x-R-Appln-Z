@@ -19,7 +19,7 @@ RUN chown ${uid}:${gid} $SHINY_HOME \
     && chown ${uid}:${gid} /etc/shiny-server \
     && chown ${uid}:${gid} /var/log/supervisord \
     && groupadd -g ${gid} ${group} \
-    && useradd -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
+    && adduser -d "$SHINY_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} 
     # && useradd -d "$SHINY_HOME" -g ${gid} -m -s /bin/bash ${user}
 #copy application
 COPY /app /srv/shiny-server/
@@ -64,12 +64,12 @@ WORKDIR /var/log/supervisord
 #
 # USER 1000
 # Adjust permissions on /etc/passwd so writable by group root.
-RUN chmod g+w /etc/passwd
-### Access Fix 24
-RUN username=`id -u` 
-COPY /scripts/uid-set.sh /usr/bin/
-RUN chmod +x /usr/bin/uid-set.sh
-RUN /usr/bin/uid-set.sh
+# RUN chmod g+w /etc/passwd
+# ### Access Fix 24
+# RUN username=`id -u` 
+# COPY /scripts/uid-set.sh /usr/bin/
+# RUN chmod +x /usr/bin/uid-set.sh
+# RUN /usr/bin/uid-set.sh
 
 
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]  
