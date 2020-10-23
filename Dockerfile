@@ -1,11 +1,10 @@
 FROM ashish1981/s390x-shiny-server
 ENV DEBIAN_FRONTEND noninteractive
 # ENV SHINY_LOG_LEVEL=TRACE
-
+RUN install2.r  rJava
 # # #
 RUN apt-get update && apt-get install -y \
     nano
-
 
 RUN mkdir -p /var/log/supervisord
 #copy application
