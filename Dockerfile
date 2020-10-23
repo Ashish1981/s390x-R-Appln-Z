@@ -21,16 +21,17 @@ RUN rm -rf /tmp/*
 EXPOSE 9443 8000
 #
 COPY /supervisord.conf /etc/
-# RUN chmod -Rf g+wx /var/log/supervisord
-# RUN chmod -Rf g+wx /var/log/shiny-server 
-# RUN chmod -Rf g+wx /srv/shiny-server
-# RUN chmod -Rf g+wx /var/lib/shiny-server
-# RUN chmod -Rf g+wx /etc/shiny-server
 RUN chgrp -Rf root /var/log/supervisord && chmod -Rf g+rwx /var/log/supervisord
 RUN chgrp -Rf root /var/log/shiny-server && chmod -Rf g+rwx /var/log/shiny-server
 RUN chgrp -Rf root /srv/shiny-server && chmod -Rf g+rwx /srv/shiny-server
 RUN chgrp -Rf root /var/lib/shiny-server && chmod -Rf g+rwx /var/lib/shiny-server
 RUN chgrp -Rf root /etc/shiny-server && chmod -Rf g+rwx /etc/shiny-server
+
+RUN chmod -Rf g+rwx /var/log/supervisord
+RUN chmod -Rf g+rwx /var/log/shiny-server 
+RUN chmod -Rf g+rwx /srv/shiny-server
+RUN chmod -Rf g+rwx /var/lib/shiny-server
+RUN chmod -Rf g+rwx /etc/shiny-server
 
 #VOLUME [ "/tmp/log/supervisord" ]
 WORKDIR /var/log/supervisord
