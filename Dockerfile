@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /var/log/supervisord
 #copy application
+
 COPY /app /srv/shiny-server/
 #
 # Copy configuration files into the Docker image
