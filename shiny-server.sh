@@ -11,7 +11,7 @@ if [ `id -u` -ge 10000 ]; then
 # mkdir -p /var/log/supervisord/shiny-server
 #chown shiny.shiny /var/log/supervisord/shiny-server
 #chown shiny.shiny /var/log/shiny-server
-
+#. /etc/environment
 if [ "$APPLICATION_LOGS_TO_STDOUT" != "false" ];
 then
     # push the "real" application logs to stdout with xtail in detached mode

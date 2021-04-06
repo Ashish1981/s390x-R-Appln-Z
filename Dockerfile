@@ -1,11 +1,15 @@
-FROM ashish1981/s390x-shiny-server:3.6.3
+FROM ashish1981/s390x-rbase-rjava-rplumber
 ENV DEBIAN_FRONTEND noninteractive
+ENV LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x
+
 # ENV SHINY_LOG_LEVEL=TRACE
-# RUN install2.r  rJava
+RUN setarch s390x R CMD javareconf
+#RUN install2.r  rJava
 # # #
 RUN apt-get update && apt-get install -y \
     nano \
-    supervisor
+    supervisor 
 
 RUN mkdir -p /var/log/supervisord
 #copy application
