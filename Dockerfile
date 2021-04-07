@@ -1,4 +1,5 @@
-FROM ashish1981/s390x-rbase-rjava-rplumber
+#FROM ashish1981/s390x-rbase-rjava-rplumber
+FROM docker.io/ashish1981/s390x-ubuntu-shiny-server
 ENV DEBIAN_FRONTEND noninteractive
 ENV LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x
