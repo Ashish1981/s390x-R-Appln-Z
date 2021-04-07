@@ -4,13 +4,13 @@ ENV LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-ja
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x
 
 # ENV SHINY_LOG_LEVEL=TRACE
-RUN export LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java \
-    && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x \
-    && R CMD javareconf 
-RUN install2.r  rJava
-RUN export LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java \
-    && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x \
-    && R CMD javareconf 
+# RUN export LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java \
+#     && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x \
+#     && R CMD javareconf 
+# RUN install2.r  rJava
+# RUN export LD_LIBRARY_PATH=/usr/lib/jvm/default-java/lib/server:/usr/lib/jvm/default-java \
+#     && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x \
+#     && R CMD javareconf 
 
 # # #
 RUN apt-get update && apt-get install -y \
