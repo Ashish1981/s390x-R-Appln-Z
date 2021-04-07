@@ -16,10 +16,8 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-s390x
 RUN apt-get update && apt-get install -y \
     nano \
     supervisor 
-
 RUN mkdir -p /var/log/supervisord
 #copy application
-
 COPY /app /srv/shiny-server/
 #
 # Copy configuration files into the Docker image
