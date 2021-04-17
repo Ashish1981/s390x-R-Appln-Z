@@ -385,7 +385,6 @@ options(shiny.maxRequestSize = 9*1024^2)
 
 server <- shinyServer(function(input, output, session) {
 
-  baseurl <- "http://192.86.33.143:9080/"
   #zoweurl = 
   store_runsql <- 0
   resubmitListcount <<- 0
@@ -892,6 +891,9 @@ server <- shinyServer(function(input, output, session) {
           var row = sel[0].row;
           var selectnamedata = data.getValue(row,0);
           Shiny.onInputChange('selected_step',selectnamedata);"
+          if(length(unique(statdata$StepName)) !=  nrow(statdata)){
+            statdata$StepName <<- paste(statdata$StepName,"@",row.names(statdata),sep="")
+          }
           mystatdata <- statdata[,c(1,4,5)]
           jstat <-  plot_ly(
             x = factor(statdata$StepName,levels = statdata$StepName),
@@ -1449,7 +1451,9 @@ server <- shinyServer(function(input, output, session) {
         easyClose = FALSE,
         footer = NULL
       ))
-      qryurl <- paste(baseurl,"filemanager/getData",sep="")
+      readRenviron("../.env")
+      baseurl <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),sep="")
+      qryurl <- paste(baseurl,"/filemanager/getData",sep="")
       pc_json <- list(
         resource = list(
           resourceName = input$accept_filedata_source_dsname
@@ -1556,7 +1560,9 @@ server <- shinyServer(function(input, output, session) {
         easyClose = FALSE,
         footer = NULL
       ))
-      qryurl <- paste(baseurl,"fmdb2genapi/getData",sep="")
+      readRenviron("../.env")
+      baseurl <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),sep="")
+      qryurl <- paste(baseurl,"/fmdb2genapi/getData",sep="")
       pc_json <- list(
         resource = list(
           ssid = input$accept_db2_ssid,

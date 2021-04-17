@@ -105,12 +105,36 @@ ui <- dashboardPage(
         
       )
     ),
-
+    # tags$script('
+    #           $(document).ready(function () {
+    #           navigator.geolocation.getCurrentPosition(onSuccess, onError);
+    #           
+    #           function onError (err) {
+    #           Shiny.onInputChange("geolocation", false);
+    #           }
+    #           
+    #           function onSuccess (position) {
+    #           setTimeout(function () {
+    #           var coords = position.coords;
+    #           console.log(coords.latitude + ", " + coords.longitude);
+    #           Shiny.onInputChange("geolocation", true);
+    #           Shiny.onInputChange("lat", coords.latitude);
+    #           Shiny.onInputChange("long", coords.longitude);
+    #           }, 1100)
+    #           }
+    #           });
+    # '),
+    
     tags$head( 
       tags$style(HTML(".main-sidebar { font-size: 16px; }")) #change the font size to 20
     ),
     tags$head(
       tags$style(HTML(
+        #'.skin-blue .main-sidebar{background-color: black;}',
+        #'.skin-blue .main-sidebar .sidebar{color: red;}',
+        #'.skin-blue .main-sidebar .sidebar .sidebar-menu{background-color: grey;}',
+        #'.skin-blue .main-sidebar .sidebar .sidebar-menu .active a{background-color: red;}',
+        #'.skin-blue .main-header .logo{background-color: black;}',
         '.content-wrapper, .right-side {background-color: darkcyan;}',
         '.box.box-solid.box-primary>.box-header {
         background:rgba(0, 0, 54 ,0);
@@ -323,10 +347,6 @@ server <- shinyServer(function(input, output, session) {
   ReappData$a <<- ""
   ReappData$b <<- ""
   order_unit_price <<- reactiveVal(0)
-  manual_lat <<- reactiveVal(998)
-  manual_lng <<- reactiveVal(998)
-  input_long <<- 0
-  input_lat <<- 0
   additemstolist <- reactiveVal(FALSE)
   stock_verfied_reactive <- reactiveVal(FALSE)
   create_new_order_reactive <- reactiveVal(FALSE)
@@ -369,11 +389,7 @@ server <- shinyServer(function(input, output, session) {
   AccountHolderName <<- ""
   PaymentTable <<- data.frame(BankName=as.character(),BankAccountUsed=as.character(),AccountHolderName=as.character(),DebitTxn=as.numeric(),CreditTxn=as.numeric(),TxnCurrency=as.character(),stringsAsFactors=FALSE)
   #basemicroserviceurl <<- "https://route2-ref-impl-zsandbox.zdev-1591878922444-f72ef11f3ab089a8c677044eb28292cd-0000.us-east.containers.appdomain.cloud/"
-  #basemicroserviceurl <<- "http://173.193.75.239:30833/"
-  #basemicroserviceurl <<- "http://173.193.75.239:31701/"
-  #emailserviceurl <<- "http://173.193.75.239:31058/"
   basemicroserviceurl <<- "http://localhost:8000/"
-  emailserviceurl <<- "http://localhost:8100/"
   
   output$select_currency <- renderUI({
     z1 <- as.data.frame(fromJSON("http://data.fixer.io/api/symbols?access_key=79dc687089494f9b6ff9cf4eb66040f6"))
@@ -484,29 +500,14 @@ server <- shinyServer(function(input, output, session) {
   
   
   output$delivery_message <- renderText({
-    print("*****")
-    #print(input$geolocation)
-    print(manual_lat())
-    print(manual_lng())
-    print("*****")
-    if(!is.na(input$geolocation)) {
-      if(!input$geolocation && abs(manual_lat()) > 200 && abs(manual_lng()) > 200) {
-        shinyalert("Add Delivery Address",
-                   type = "input",inputType="character",confirmButtonCol = "#3F27B3",
-                   callbackR = getDeliveryAddress
-        )
-        return("Add Delivery location")
-      }
-    } else {
-      if(manual_lat() == 0 && manual_lng() == 0) {
-        shinyalert("Add Delivery Address",
-                   type = "input",inputType="character",confirmButtonCol = "#3F27B3",
-                   callbackR = getDeliveryAddress
-        )
-        return("Add Delivery location")
-      }
+    
+    if(!input$geolocation) {
+      return("Cannot be delivered to your location")
     }
 
+    #print(paste("User Lat ",input$lat))
+    #print(paste("User Long",input$long))
+    
     showModal(modalDialog(
       title = "Please wait...",
       h4("Checking Delivery"),
@@ -515,27 +516,14 @@ server <- shinyServer(function(input, output, session) {
     ))
     
     
-    if (!is.na(input$geolocation)) {
-      if(input$geolocation) {
-        input_long <<- input$long
-        input_lat <<- input$lat
-      } else {
-        input_long <<- manual_lng()
-        input_lat <<- manual_lat()
-      }
-    } else {
-      input_long <<- manual_lng()
-      input_lat <<- manual_lat()
-    }
-    
-    store_runsql <- paste("select  CITY_ID, CITY_NAME,  LAT, LONG, sqrt(((long-(",input_long,"))*(long-(",input_long,")))+((lat-(",input_lat,"))*(lat-(",input_lat,")))) as A from world_city  order by A Fetch first 5 rows only",sep="")
+    store_runsql <- paste("select  CITY_ID, CITY_NAME,  LAT, LONG, sqrt(((long-(",input$long,"))*(long-(",input$long,")))+((lat-(",input$lat,"))*(lat-(",input$lat,")))) as A from world_city  order by A Fetch first 5 rows only",sep="")
     
     res <- POST(paste(basemicroserviceurl,"getDVMzEUSDocker?",sep="")
                 ,body=list(myquerry = store_runsql),
                 ,encode = "json")
     
     appData <- content(res)
-	  print(appData)
+	print(appData)
     if (appData[[2]][[2]] > 0) {
       mywarehouse <- as.data.frame(matrix(unlist(appData[[1]]), ncol=appData[[2]][[2]], byrow=TRUE), stringsAsFactors=FALSE)
       names(mywarehouse) <- c("WarehouseID","WarehouseName","WarehouseLat","WarehouseLong","cartesian")
@@ -549,7 +537,7 @@ server <- shinyServer(function(input, output, session) {
     i <- 1
     
     while (!warehouse_found && i <= nrow(mywarehouse)) {
-      distance_get_url <- paste(google_distance_base_url,mywarehouse[i,]$WarehouseLat,",",mywarehouse[i,]$WarehouseLong,"&destinations=",input_lat,",",input_long,google_distance_api_key,sep="")
+      distance_get_url <- paste(google_distance_base_url,mywarehouse[i,]$WarehouseLat,",",mywarehouse[i,]$WarehouseLong,"&destinations=",input$lat,",",input$long,google_distance_api_key,sep="")
       #print(paste("Iteration ",i))
       #print(paste("Url ",distance_get_url))
       responsedata <- fromJSON(distance_get_url)
@@ -579,14 +567,14 @@ server <- shinyServer(function(input, output, session) {
           slat <<- as.numeric(warehouse$WarehouseLat)
           slong <<- as.numeric(warehouse$WarehouseLong)
           google_route_base_url <- "https://maps.googleapis.com/maps/api/directions/json?origin="
-          get_route_url <- paste(google_route_base_url,slat,",",slong,"&destination=",input_lat,",",input_long,"&key=AIzaSyBggeTxDlyA7CcJq7hWhHPFgc10kIqLFH8",sep="")
+          get_route_url <- paste(google_route_base_url,slat,",",slong,"&destination=",input$lat,",",input$long,"&key=AIzaSyBggeTxDlyA7CcJq7hWhHPFgc10kIqLFH8",sep="")
           responsedata <- fromJSON(get_route_url)
           if (responsedata[[3]] == "OK") {
             polybasedata <<- data.frame(responsedata$routes$legs[[1]]$steps[[1]]$start_location$lat, responsedata$routes$legs[[1]]$steps[[1]]$start_location$lng,responsedata$routes$legs[[1]]$steps[[1]]$end_location$lat,responsedata$routes$legs[[1]]$steps[[1]]$end_location$lng)
             names(polybasedata) <<- c("StartLat","StartLong","EndLat","EndLong")
           }
           else {
-            polybasedata <<- data.frame(StartLat=slat,StartLong=slong,EndLat=input_lat,EndLong=input_long)
+            polybasedata <<- data.frame(StartLat=slat,StartLong=slong,EndLat=input$lat,EndLong=input$long)
           }
           #inter <<- geosphere::gcIntermediate(c(slong, slat), c(input$long, input$lat), n=50, addStartEnd=TRUE)
         }
@@ -613,12 +601,16 @@ server <- shinyServer(function(input, output, session) {
   
     
     leaflet() %>%
-      setView(lng = input_long, lat = input_lat, zoom=16) %>%
+      setView(lng = input$long, lat = input$lat, zoom=16) %>%
       addTiles(options = providerTileOptions(noWrap = TRUE)) %>%
-      addAwesomeMarkers(lng=input_long, lat=input_lat, icon=icons) %>%
+      addAwesomeMarkers(lng=input$long, lat=input$lat, icon=icons) %>%
       addMarkers(lng=slong, lat=slat) %>%
-      fitBounds(slong, slat, input_long, input_lat) %>%
+      fitBounds(slong, slat, input$long, input$lat) %>%
+      #lines(inter)
       addPolylines(lng=polybasedata$StartLong, lat=polybasedata$StartLat, color = "darkred", weight = 3)
+      #addPolylines(lng=c(polybasedata$StartLong, polybasedata$EndLong), lat=c(polybasedata$StartLat, polybasedata$EndLat),color = "darkred", weight = 2)
+      #addPolylines(lng=c(slong, input$long), lat=c(slat, input$lat),color = "darkred", weight = 4, dashArray =c(10,10))
+          #addMouseCoordinates(native.crs = TRUE)
   })
 
   observeEvent(input$incidentmap_click, {
@@ -810,7 +802,7 @@ server <- shinyServer(function(input, output, session) {
     
     if(nchar(str_pad(input$accept_account_ref,6,pad="0")) == 6) {
       readRenviron("../.env")
-      urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",str_pad(input$accept_account_ref,6,pad="0"),sep="")
+      urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",str_pad(input$accept_account_ref,6,pad="0"),sep="")
       accountdata <- fromJSON(urlname)
       if(accountdata[[1]][[1]][[1]][[2]] != 0){
         disable("RetrieveAccount")
@@ -919,10 +911,6 @@ server <- shinyServer(function(input, output, session) {
               OTPIN <<- str_pad(sample(1:9999,1),4,pad="0")
               #AUTH_ID="MAZTI5MWUZZDY5NTCYYJ"
               #AUTH_TOKEN="YzAyM2ExNjdiOTA0YjA2NTdiNzhmOTkyOTBmZWIx"
-              res <- POST(paste(emailserviceurl,"sendgmailOTPJKE?",sep="")
-                          ,body=list(AccountNum = dx1$NUMB,OTP = OTPIN,Vendor = "Pen & Paper Stores",TxnAmount=paste(input$selected_currency,round(stock_verified_price + Additionalinfo$DeliveryCharges, 2),sep=" ")),
-                          ,encode = "json")
-              OTPMailStatus <- content(res)
               AccountHolderName <<- dx1$NAME
               account_masked <- paste(substring(dx1$NUMB,1,1),"X",substring(dx1$NUMB,3,3),"X",substring(dx1$NUMB,5,5),"X",sep="")
               message <- paste("Your 4 digit OTP against JKEBANK account ",account_masked, " is ",OTPIN,sep="")
@@ -937,16 +925,8 @@ server <- shinyServer(function(input, output, session) {
               appData <- content(res)
               if (length(appData$result) == 0) {
                 shinyalert("Error", "Please register with JKE Bank OTP Mobile Tracker App", type = "error",confirmButtonCol = "#E74C3C")
-                if (OTPMailStatus == "Mail Sent") {
-                  enable("RetrieveAccount")
-                  OTPGenerated <<- TRUE
-                  OTPValidated <<- FALSE
-                  shinyalert("Info", "Mobile not registered for online Payment - Check email instead", type = "info",confirmButtonCol = "#3F27B3")
-                  return("Press Enter OTP to continue Payment")
-                } else {
-                  disable("RetrieveAccount")
-                  return("Mobile not registered for online Payment")
-                }
+                disable("RetrieveAccount")
+                return("Mobile not registered for online Payment")
               }
               else {
                 newOTP_TS <- fromJSON("http://worldtimeapi.org/api/timezone/Etc/UTC")$unixtime
@@ -995,26 +975,6 @@ server <- shinyServer(function(input, output, session) {
     }
   }
 ##SGAug2020   
-  
-  getDeliveryAddress <- function(value) {
-    if (value != "") {
-      LandmarkName <- trimws(gsub("\\s+", " ", value))
-      ModLandmarkName <- gsub("\\ ","\\+",LandmarkName) 
-      landmark_found <- FALSE
-      get_milestone_url <- paste("https://maps.googleapis.com/maps/api/geocode/json?address=",ModLandmarkName,"&key=AIzaSyBggeTxDlyA7CcJq7hWhHPFgc10kIqLFH8",sep="")
-      responsedata <- fromJSON(get_milestone_url)
-      #print(responsedata$status)
-      if (responsedata$status == "OK") {
-        manual_lat(responsedata$results$geometry$location$lat)
-        manual_lng(responsedata$results$geometry$location$lng)
-      } else {
-        x <- manual_lat() - 1
-        y <- manual_lng() - 1
-        manual_lat(x)
-        manual_lng(y)
-      }
-    }
-  }
   
   
   output$select_item_ref <- renderUI({
@@ -1474,7 +1434,7 @@ server <- shinyServer(function(input, output, session) {
         shinyalert("Order", ReappData$c, type = "info",confirmButtonCol = "#3F27B3")
         if (ReappData$c != "ORDER SUCCESSFULLY PLACED") {
           readRenviron("../.env")
-          urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",str_pad(input$accept_account_ref,6,pad="0"),sep="")
+          urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",str_pad(input$accept_account_ref,6,pad="0"),sep="")
           accountdata <- fromJSON(urlname)
           if(accountdata[[1]][[1]][[1]][[2]] != 0){
             shinyalert("Error", "Reversal Account Not found", type = "error",confirmButtonCol = "#E74C3C")
@@ -1485,7 +1445,7 @@ server <- shinyServer(function(input, output, session) {
           add_date <- paste(as.integer(format(Sys.time(), "%d")),as.integer(format(Sys.time(), "%m")),as.integer(format(Sys.time(), "%y")))
           acountbalance <- as.numeric(gsub("\\$","",dx2$AMOUNT)) + order_unit_price()*input$accept_order_quantity
           pc_json <- list(
-            JKEBCOMM = list(
+            DFHCOMMAREA = list(
               FILEA = list(
                 FILEREC = list(
                   STAT = "U",
@@ -1495,8 +1455,7 @@ server <- shinyServer(function(input, output, session) {
                   PHONE = dx2$PHONE,
                   DATEX = add_date,
                   AMOUNT = paste("$",acountbalance,sep=""),
-                  COMMENT = "Refund",
-                  EMAIL = dx2$EMAIL
+                  COMMENT = "Refund"
                 )
               ),
               COMM_AREA = list(
@@ -1508,14 +1467,13 @@ server <- shinyServer(function(input, output, session) {
                   PHONE = dx2$PHONE,
                   DATEX = dx2$DATEX,
                   AMOUNT = dx2$AMOUNT,
-                  COMMENT = dx2$COMMENT,
-                  EMAIL = dx2$EMAIL
+                  COMMENT = dx2$COMMENT
                 )
               )
             )
           )
           readRenviron("../.env")
-          res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",dx2$NUMB,sep="")
+          res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",dx2$NUMB,sep="")
                      , body = pc_json
                      , encode = "json")
           
@@ -1524,9 +1482,6 @@ server <- shinyServer(function(input, output, session) {
             shinyalert("Error", "Payment Reversal Unsuccessful", type = "error",confirmButtonCol = "#E74C3C")
           }
           else {
-            res <- POST(paste(emailserviceurl,"sendgmailJKE?",sep="")
-                        ,body=list(AccountNum = dx2$NUMB,TxnType = "Payment reversal",TxnAmount=paste("$",round(order_unit_price()*input$accept_order_quantity, 2),sep="")),
-                        ,encode = "json")
             shinyalert("Success", "Payment Reversed", type = "success",confirmButtonCol = "#54BA60")
           }
           ReappData$c <<- ""

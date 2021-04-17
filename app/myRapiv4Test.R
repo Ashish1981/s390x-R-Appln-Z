@@ -5,6 +5,10 @@ library(stringr)
 library(DBI)
 library(RJDBC)
 library(rJava)
+library(gmailr)
+library(pander)
+library(dplyr)
+
 
 #* Echo back the input
 #* @param msg The message to echo
@@ -226,9 +230,6 @@ function(l1, mycurrency) {
 #* @param y payment info
 #* @post /order
 function(x, y) {
-  
-  emailserviceurl <- "http://localhost:8100/"  
-  
   order_input <- as.data.frame(matrix(as.integer(unlist(str_extract_all(x,"[0-9]+"))), ncol=2, byrow=TRUE), stringsAsFactors=FALSE)
   
   account_info <- unlist(strsplit(y, split=" "))
@@ -260,7 +261,7 @@ function(x, y) {
   readRenviron("/srv/shiny-server/.env")
   #Validate Account
   if (!processing_error) {
-    urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",account_num,sep="")
+    urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",account_num,sep="")
     accountdata <- fromJSON(urlname)
     if(accountdata[[1]][[1]][[1]][[2]] != 0){
       message <- "Account Not Found"
@@ -270,6 +271,7 @@ function(x, y) {
       basedata <- as.data.frame(accountdata[[1]][[2]][[1]],stringsAsFactors = F)
     }
   }
+  
   #Check Balance
   if (!processing_error) {
     add_date <- paste(as.integer(format(Sys.time(), "%d")),as.integer(format(Sys.time(), "%m")),as.integer(format(Sys.time(), "%y")))
@@ -285,24 +287,18 @@ function(x, y) {
   #Pay Bill
   if (!processing_error) {
     pc_json <- list(
-      JKEBCOMM = list(FILEA = list(FILEREC = list(
-        STAT = "U",NUMB = basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=add_date,AMOUNT=paste("$",newaccountbalance,sep=""),COMMENT="PnP Buy",EMAIL=basedata$EMAIL)),
+      DFHCOMMAREA = list(FILEA = list(FILEREC = list(
+        STAT = "U",NUMB = basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=add_date,AMOUNT=paste("$",newaccountbalance,sep=""),COMMENT="PnP Buy")),
         COMM_AREA = list(FILEREC = list(
-          STAT=basedata$STAT,NUMB=basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=basedata$DATEX,AMOUNT=basedata$AMOUNT,COMMENT=basedata$COMMENT,EMAIL=basedata$EMAIL)
+          STAT=basedata$STAT,NUMB=basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=basedata$DATEX,AMOUNT=basedata$AMOUNT,COMMENT=basedata$COMMENT)
         )
       ))  
-    res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",account_num,sep=""),body=pc_json,encode ="json")
+    res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",account_num,sep=""),body=pc_json,encode ="json")
     appData <- content(res)
-
     if (appData[[1]][[1]][[1]][[2]] != 0) {
       message <- "Payment Unsuccessful"
       processing_error <- TRUE
-    } else {
-      res <- POST(paste(emailserviceurl,"sendgmailJKE?",sep="")
-                  ,body=list(AccountNum = basedata$NUMB,TxnType = "Debit",TxnAmount=paste("$",round(mysum, 2),sep="")),
-                  ,encode = "json")
     }
-    
   }
   
   #Place Orders
@@ -353,7 +349,7 @@ function(x, y) {
   }
   #Check Account for Refund and process reversal
   if (!processing_error && (refund > 0) ) {
-    urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",account_num,sep="")
+    urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",account_num,sep="")
     accountdata <- fromJSON(urlname)
     if(accountdata[[1]][[1]][[1]][[2]] != 0){
       message <- "Account Not found for reversal"
@@ -368,22 +364,18 @@ function(x, y) {
     newaccountbalance <- round(accountbalance + refund, 2)
     #Pay Bill
     pc_json <- list(
-      JKEBCOMM = list(FILEA = list(FILEREC = list(
-        STAT = "U",NUMB = basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=add_date,AMOUNT=paste("$",newaccountbalance,sep=""),COMMENT="Rev PnP",,EMAIL=basedata$EMAIL)),
+      DFHCOMMAREA = list(FILEA = list(FILEREC = list(
+        STAT = "U",NUMB = basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=add_date,AMOUNT=paste("$",newaccountbalance,sep=""),COMMENT="Rev PnP")),
         COMM_AREA = list(FILEREC = list(
-          STAT=basedata$STAT,NUMB=basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=basedata$DATEX,AMOUNT=basedata$AMOUNT,COMMENT=basedata$COMMENT,EMAIL=basedata$EMAIL)
+          STAT=basedata$STAT,NUMB=basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=basedata$DATEX,AMOUNT=basedata$AMOUNT,COMMENT=basedata$COMMENT)
         )
       )
     )  
-    res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",account_num,sep=""),body=pc_json,encode="json")
+    res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebanking/accno/",account_num,sep=""),body=pc_json,encode="json")
     appData <- content(res)
     if (appData[[1]][[1]][[1]][[2]] != 0) {
       message <- "Payment Reversal Unsuccessful"
       processing_error <- TRUE
-    } else {
-      res <- POST(paste(emailserviceurl,"sendgmailJKE?",sep="")
-                  ,body=list(AccountNum = basedata$NUMB,TxnType = "Payment reversal",TxnAmount=paste("$",round(refund, 2),sep="")),
-                  ,encode = "json")
     }
   }
   
@@ -396,117 +388,128 @@ function(x, y) {
   z <- list(order_input,refund_amount,message)
 }
 
-#* Create GENApps Claim
-#* @param CustomerNum  
-#* @param PolicyNum
-#* @param ClaimDate  
-#* @param ClaimAmount
-#* @param ClaimCause
-#* @post /zGenAppsCreateClaim
-function(CustomerNum, PolicyNum, ClaimDate, ClaimAmount, ClaimCause) {
+#* Send Gmail
+#* @param myentity Entity Type Customer or Policy or Claim
+#* @param operation Operation created deleted updated settled
+#* @param reference Customer num or Policy Num or Claim Num
+#* @post /sendgmailGENApps
+function(myentity, operation, reference){
+  #basemicroserviceurl <<- "https://localhost:8000/"
+  basemicroserviceurl <<- "https://route2-ref-impl-zsandbox.zdev-1591878922444-f72ef11f3ab089a8c677044eb28292cd-0000.us-east.containers.appdomain.cloud/"
   
-  emailserviceurl <- "http://localhost:8100/" 
+  email_qry <- ifelse(myentity=="Claim", paste("select firstname, lastname, emailaddress from vcustomer A, vpolicy B, vclaim C where A.CUSTOMERNUMBER = B.CUSTOMERNUMBER and B.POLICYNUMBER = C.POLICYNUMBER AND C.CLAIMNUMBER = ",reference,sep=""),
+                      ifelse(myentity=="Policy",paste("select firstname, lastname, emailaddress from vcustomer A, vpolicy B where A.CUSTOMERNUMBER = B.CUSTOMERNUMBER and B.POLICYNUMBER = ",reference,sep=""),
+                             paste("select firstname, lastname, emailaddress from vcustomer where CUSTOMERNUMBER = ",reference,sep="")))
   
-  pc_json <- list(
-    LGCMAREA = list(
-      CA_CUSTOMER_NUM = CustomerNum,
-      CA_POLICY_REQUEST = list(
-        CA_POLICY_NUM = PolicyNum,
-        CA_CLAIM = list(
-          CA_C_DATE = ClaimDate,
-          CA_C_VALUE = ClaimAmount,
-          CA_C_CAUSE = ClaimCause,
-          CA_C_PAID = 0,
-          CA_C_OBSERVATIONS = ""
-        )
-      ) 
-    )
-  )  
-  readRenviron("/srv/shiny-server/.env")
-  res <- POST(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/CB12Claim/AddClaim",sep="")
-              , body = pc_json
-              , encode = "json")
   
-  NewCLaimData <- content(res)
-  if (NewCLaimData$LGCMAREA$CA_RETURN_CODE == 0) {
-    ClaimNumber <- NewCLaimData$LGCMAREA$CA_POLICY_REQUEST$CA_CLAIM$CA_C_NUM
-    myentity = "Claim"
-    operation = "created"
-    reference = ClaimNumber
-    res <- POST(paste(emailserviceurl,"sendgmailGENApps3?",sep="")
-                ,body=list(myentity = myentity,operation = operation,reference=reference,CustomerNum=CustomerNum),
-                ,encode = "json")
-  } else {
-    ClaimNumber <- 0
+  #print(email_qry)
+  
+  res <- POST(paste(basemicroserviceurl,"getDVMzEUSDocker?",sep="")
+              ,body=list(myquerry = email_qry),
+              ,encode = "json")
+  
+  appPol <- content(res)
+  if (length(appPol) > 1) {
+    if (appPol[[2]][[2]] > 0 && length(appPol[[1]]) != 0) {
+      To_email_id <-  trimws(appPol[[1]][[1]]$EMAILADDRESS)
+      First_Name <- trimws(appPol[[1]][[1]]$FIRSTNAME)
+      Last_Name <- trimws(appPol[[1]][[1]]$LASTNAME)
+    }
   }
-  GeneratedClaim <- list(ClaimNumber=ClaimNumber)
-}
-
-
-#* Settle GENApps Claim
-#* @param AccountNumber  
-#* @param ClaimNum
-#* @param SetllementAmount  
-#* @param Observations
-#* @post /zGenAppsSettleClaim
-function(AccountNumber, ClaimNum, SetllementAmount, Observations,CustomerNum) {
   
-  emailserviceurl <- "http://localhost:8100/" 
+  data_qry <- ifelse(myentity=="Claim", paste("select * from vclaim C where CLAIMNUMBER = ",reference,sep=""),
+                     ifelse(myentity=="Policy",paste("select * from vpolicy C where POLICYNUMBER = ",reference,sep=""),
+                            paste("select * from vcustomer where CUSTOMERNUMBER = ",reference,sep="")))
   
-  pc_json <- list(
-    LGCMAREA = list(
-      CA_POLICY_REQUEST = list(
-        CA_CLAIM = list(
-          CA_C_PAID = SetllementAmount,
-          CA_C_OBSERVATIONS = Observations
-        )
-      ) 
-    )
-  )  
   
-  readRenviron("/srv/shiny-server/.env")
-  res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/CB12Claim/Enquire/",ClaimNum,sep="")
-             , body = pc_json
-             , encode = "json")
+  resdata <- POST(paste(basemicroserviceurl,"getDVMzEUSDocker?",sep="")
+                  ,body=list(myquerry = data_qry),
+                  ,encode = "json")
   
-  UpdateCLaimData <- content(res)
-  if (UpdateCLaimData$LGCMAREA$CA_RETURN_CODE == 0) {
-    myentity = "Claim"
-    operation = "Settled"
-    reference = ClaimNum
-    res <- POST(paste(emailserviceurl,"sendgmailGENApps3?",sep="")
-                ,body=list(myentity = myentity,operation = operation,reference=reference,CustomerNum=CustomerNum),
-                ,encode = "json")
-    urlname <- paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",AccountNumber,sep="")
-    accountdata <- fromJSON(urlname)
-    if(accountdata[[1]][[1]][[1]][[2]] != 0){
-      result <- "Account Not Found"
-    } else {
-      basedata <- as.data.frame(accountdata[[1]][[2]][[1]],stringsAsFactors = F)
-      add_date <- paste(as.integer(format(Sys.time(), "%d")),as.integer(format(Sys.time(), "%m")),as.integer(format(Sys.time(), "%y")))
-      accountbalance <- as.numeric(gsub("\\$","",basedata$AMOUNT))
-      newaccountbalance <- round(accountbalance + SetllementAmount, 2)
-      pc_json <- list(
-        JKEBCOMM = list(FILEA = list(FILEREC = list(
-          STAT = "U",NUMB = basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=add_date,AMOUNT=paste("$",newaccountbalance,sep=""),COMMENT="GENApps",EMAIL=basedata$EMAIL)),
-          COMM_AREA = list(FILEREC = list(
-            STAT=basedata$STAT,NUMB=basedata$NUMB,NAME=basedata$NAME,ADDRX=basedata$ADDRX,PHONE=basedata$PHONE,DATEX=basedata$DATEX,AMOUNT=basedata$AMOUNT,COMMENT=basedata$COMMENT,EMAIL=basedata$EMAIL)
-          )
-        ))  
-      res <- PUT(paste(Sys.getenv("MainframeIP"),":",Sys.getenv("zConnectPort"),"/jkebankaccount/account/",AccountNumber,sep=""),body=pc_json,encode ="json")
-      appData <- content(res)
-      if (appData[[1]][[1]][[1]][[2]] != 0) {
-        result  <- "Payout Unsuccessful"
-      } else {
-        res <- POST(paste(emailserviceurl,"sendgmailJKE?",sep="")
-                    ,body=list(AccountNum = AccountNumber,TxnType = "Credit",TxnAmount=paste("$",SetllementAmount,sep=""))
-                    ,encode = "json")
-        result <- "settlement successful"
+  appData <- content(resdata)
+  if (length(appData) > 1) {
+    if (appData[[2]][[2]] > 0 && length(appData[[1]]) != 0) {
+      d1 <- as.data.frame(matrix(unlist(appData[[1]]), ncol=appData[[2]][[2]], byrow=TRUE), stringsAsFactors=FALSE)
+      names(d1) <- names(data.frame(appData[[1]][[1]]))
+    }
+  }
+  
+  
+  if (myentity=="Policy") {
+    if (d1$POLICYTYPE == "M") {
+      policy_data_qry <- paste("select * from VMOTOR C where POLICYNUMBER = ",reference,sep="")
+      policy_type <- "Motor"
+    }
+    if (d1$POLICYTYPE == "E") {
+      policy_data_qry <- paste("select * from VENDOWMENT C where POLICYNUMBER = ",reference,sep="")
+      policy_type <- "Endowment"
+    }
+    if (d1$POLICYTYPE == "H") {
+      policy_data_qry <- paste("select * from VHOUSE C where POLICYNUMBER = ",reference,sep="")
+      policy_type <- "House"
+    }
+    if (d1$POLICYTYPE == "C") {
+      policy_data_qry <- paste("select * from VCOMMERCIAL C where POLICYNUMBER = ",reference,sep="")
+      policy_type <- "Commercial"
+    }
+    respolicydata <- POST(paste(basemicroserviceurl,"getDVMzEUSDocker?",sep="")
+                          ,body=list(myquerry = policy_data_qry),
+                          ,encode = "json")
+    
+    appData <- content(respolicydata)
+    if (length(appData) > 1) {
+      if (appData[[2]][[2]] > 0 && length(appData[[1]]) != 0) {
+        d2 <- as.data.frame(matrix(unlist(appData[[1]]), ncol=appData[[2]][[2]], byrow=TRUE), stringsAsFactors=FALSE)
+        names(d2) <- names(data.frame(appData[[1]][[1]]))
       }
     }
-    
+    d1 <- left_join(d1,d2)
   } else {
-    result <- "settlement failed"
+    policy_type <- ""
   }
-  Output <- list(result=result)
+  
+  
+  
+  salutation <- paste("Dear ",First_Name," ", Last_Name,",",sep="")
+  
+  welcome_message <- "General Insurance App welcomes you as a new customer."
+  
+  header_message <- paste("Your",policy_type,myentity,"record #", reference,"is",operation,sep=" ")
+  
+  gm_auth_configure(path  = "genapps.json")
+  options(
+    gargle_oauth_cache = ".secretgenapps",
+    gargle_oauth_email = "gen.apps.insurance@gmail.com"
+  )
+  gm_auth(email = "gen.apps.insurance@gmail.com")
+  
+  d1[1,] <- trimws(d1[1,],"both")
+  d1 <- as.data.frame(t(d1))
+  names(d1) <- "Record"
+  
+  msg_table <- pander_return(d1,style="grid")
+  
+  if(myentity == "Customer" && operation == "created") {
+    latest_msg <- unlist(list(salutation," ",welcome_message, " ",header_message,msg_table))  
+    title_message <- "Welcome to GenApps Insurance"
+  } else {
+    latest_msg <- unlist(list(salutation," ",header_message,msg_table))
+    title_message <- paste(policy_type,myentity,reference,"is",operation,sep=" ")
+  }
+  latest_msg <- gsub("&nbsp;","Field ",latest_msg)
+  latest_msg <- gsub("PHONEHOME","BANK ACCN",latest_msg)
+  
+  #html_msg_text <- paste(html_msg_text,x2,sep="")
+  
+  my_email_message <- gm_mime() %>%
+    gm_to("shami.gupta@in.ibm.com") %>%
+    gm_from("General Insurance Apps (gen.apps.insurance@gmail.com)") %>%
+    gm_subject(title_message) %>%
+    gm_text_body(paste(latest_msg,collapse = "\n"))
+  #  gm_html_body(html_msg_text) 
+  #  gm_html_body('<h1>A plot of <b>MotorTrend</b> data <i>(1974)</i></h1><br><img src="cid:foobar">') %>%
+  #  gm_attach_file("mtcars.png", id = "foobar")  
+  
+  gm_send_message(my_email_message)
+  output <- "Mail Sent"
 }
