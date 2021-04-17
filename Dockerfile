@@ -17,6 +17,7 @@ FROM docker.io/ashish1981/s390x-clefos-shiny
 # RUN apt-get update && apt-get install -y \
 #     nano \
 #     supervisor 
+RUN su - -c "R -e \"install.packages(c('DT'), repos='https://cloud.r-project.org')\""
 RUN mkdir -p /var/log/supervisord
 #copy application
 COPY /app /srv/shiny-server/
